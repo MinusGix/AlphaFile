@@ -657,11 +657,11 @@ namespace AlphaFile {
 			}
 
 			// The position was not within a block, Usually (always?) this happens due to reading partially past the end of the file
-			if (!block.isValidIndex(block_pos)) {
+			if (!block_opt.value().get().isValidIndex(block_pos)) {
 				return std::nullopt;
 			}
 
-			return block.at(block_pos);
+			return block_opt.value().get().at(block_pos);
 		}]
 
 		std::vector<std::byte> read (Position position, size_t amount) {
