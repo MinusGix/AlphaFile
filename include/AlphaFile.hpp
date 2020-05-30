@@ -95,7 +95,13 @@ namespace AlphaFile {
 			close();
 
 			if (!std::filesystem::exists(t_filename)) {
+#ifdef DEBUG
+				if (std::filesystem::exists(makeAbsolute(t_filename))) {
+					throw UnknownOpenError(t_filename, "File does not exist (Developer note: Did you forget to make the path absolute?");
+				}
+#else
 				throw FileDoesNotExist(t_filename);
+#endif
 			}
 
 			if (std::filesystem::is_directory(t_filename)) {
