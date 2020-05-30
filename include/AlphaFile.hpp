@@ -626,7 +626,9 @@ namespace AlphaFile {
 
 
 
-
+		std::filesystem::path getFilename () const {
+			return file.getFilename();
+		}
 
 		void open (OpenFlags t_open_flags, std::filesystem::path t_filename) {
 			return file.open(t_open_flags, t_filename);
