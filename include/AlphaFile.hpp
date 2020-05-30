@@ -387,6 +387,14 @@ namespace AlphaFile {
 
 		explicit ConstrainedFile () {}
 
+		const BasicFile& getBasicFile () const {
+			return file;
+		}
+
+		BasicFile& getBasicFile () {
+			return file;
+		}
+
 		void setStart (std::optional<Absolute> t_start) {
 			start = t_start;
 		}
