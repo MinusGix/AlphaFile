@@ -598,7 +598,7 @@ namespace AlphaFile {
 
 		/// Returns the block if it exists
 		/// otherwise creates it, then returns it
-		std::optional<std::reference_wrapper<Block>> getBlock (RoundedPosition rounded_position) {
+		std::optional<std::reference_wrapper<Block>> getBlock (RoundedNatural rounded_position) {
 			std::optional<size_t> block_index = findBlock(rounded_position);
 
 			// Create block if it could not be found.
@@ -651,16 +651,16 @@ namespace AlphaFile {
 				return std::nullopt;
 			}
 
+			/// The position within the block that we desire
+			const size_t block_pos = position - rounded_position;
+
 			// The position was not within a block, Usually (always?) this happens due to reading partially past the end of the file
 			if (!block_opt.value().get().isValidIndex(block_pos)) {
 				return std::nullopt;
 			}
 
-			/// The position within the block that we desire
-			const size_t block_pos = position - rounded_position;
-
 			return block_opt.value().get().at(block_pos);
-		}]
+		}
 
 		std::vector<std::byte> read (Position position, size_t amount) {
 			std::vector<std::byte> values;
