@@ -15,10 +15,10 @@ namespace AlphaFile {
 		explicit OpenFlags (bool t_write=true) : write(t_write) {}
 
 		std::ios_base::openmode getOpenmode () const {
-			std::ios_base::openmode openmode = std::ios_base::in & std::ios_base::binary;
+			std::ios_base::openmode openmode = std::ios_base::in | std::ios_base::binary;
 
 			if (write) {
-				openmode = openmode & std::ios_base::out;
+				openmode = openmode | std::ios_base::out;
 			}
 
 			return openmode;
