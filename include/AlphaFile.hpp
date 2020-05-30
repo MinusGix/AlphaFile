@@ -6,6 +6,9 @@
 #include <vector>
 
 namespace AlphaFile {
+	using Natural = size_t;
+	using Absolute = size_t;
+
 	struct OpenFlags {
 		bool write = true;
 
@@ -371,10 +374,6 @@ namespace AlphaFile {
 	/// all positions are 'Natural', and do not take into account the offset
 	/// ex: read(42, 1000) reads 1000 bytes from (start + 42)
 	class ConstrainedFile {
-		public:
-		using Natural = size_t;
-		using Absolute = size_t;
-
 		protected:
 		BasicFile file;
 
