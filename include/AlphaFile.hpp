@@ -64,6 +64,15 @@ namespace AlphaFile {
 		}
 	}
 
+	// TODO: handle potential errors?
+	static std::filesystem::path makeAbsolute (const std::filesystem::path& filename) {
+		// Converts it to a canonical path: No dot, dot-dot, or symbolic links
+		return std::filesystem::canonical(
+			// For POSIX-based, this is equivalent to: std::filesystem::current_path() / filename
+			std::filesystem::absolute(filename)
+		);
+	}
+
 	class BasicFile {
 		protected:
 
