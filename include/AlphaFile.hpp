@@ -517,7 +517,7 @@ namespace AlphaFile {
 	template<typename T>
 	struct BlockCachedFile {
 		using File = T;
-		using Position = File::Position;
+		using Position = typename File::Position;
 		using RoundedNatural = Position;
 
         struct Block {
