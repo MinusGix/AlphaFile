@@ -62,6 +62,11 @@ namespace AlphaFile {
 			file.seekp(position);
 			file.write(reinterpret_cast<const char*>(data), amount);
 		}
+
+		template<typename T>
+		static T getRoundedPosition (T value, T round_to) {
+			return value - (value % round_to);
+		}
 	}
 
 	// TODO: handle potential errors?
@@ -81,6 +86,8 @@ namespace AlphaFile {
 		OpenFlags open_flags;
 
 		public:
+
+		using Position = size_t;
 
 		explicit BasicFile () {}
 
@@ -400,6 +407,8 @@ namespace AlphaFile {
 		std::optional<Absolute> end;
 		public:
 
+		using Position = Natural;
+
 		explicit ConstrainedFile () {}
 
 		const BasicFile& getBasicFile () const {
@@ -502,6 +511,222 @@ namespace AlphaFile {
 		/// Note that it does not resize the file. It is upto the caller to call .resize with the appropriate size
 		void deletion (Natural position, size_t amount, size_t chunk_size) {
 			return file.deletion(convert(position), amount, chunk_size);
+		}
+	};
+
+	template<typename T>
+	struct BlockCachedFile {
+		using File = T;
+		using Position = File::Position;
+		using RoundedNatural = Position;
+
+        struct Block {
+            std::vector<std::byte> data;
+            RoundedNatural start_position;
+
+            explicit Block (RoundedNatural t_start, std::vector<std::byte>&& t_data) : data(t_data), start_position(t_start) {}
+
+			bool isValidPosition (Position position) const {
+				return position >= start_position && isValidIndex(position - start_position);
+			}
+
+			bool isValidIndex (size_t index) const {
+				return index < data.size();
+			}
+
+			std::byte at (size_t index) const {
+				return data.at(index);
+			}
+        };
+
+		protected:
+		size_t block_size = 1024;
+		size_t max_block_count = 10;
+		std::vector<Block> blocks;
+
+		public:
+		File file;
+
+		static constexpr default_block_size = 1024;
+		static constexpr default_max_block_count = 10;
+
+		explicit BlockCachedFile (size_t t_block_size=default_block_size, size_t t_max_block_count=default_max_block_count) :
+			block_size(t_block_size), max_block_count(t_max_block_count) {}
+		explicit BlockCachedFile (T&& t_file, size_t t_block_size=default_block_size, size_t t_max_block_count=default_max_block_count) :
+			block_size(t_block_size), max_block_count(t_max_block_count), file(std::move(t_file)) {}
+
+		const File& getUnderlyingFile () const {
+			return file;
+		}
+		File& getUnderlyingFile () {
+			return file;
+		}
+
+		RoundedNatural getRoundedPosition (Position position) const {
+			return detail::getRoundedPosition(position, block_size);
+		}
+
+		// TODO: return a reference or a reference_wrapper<Block>
+		std::optional<size_t> findBlock (RoundedNatural rounded_position) const {
+			for (size_t i = 0; i < blocks.size(); i++) {
+				if (blocks.at(i).start_position == rounded_position) {
+					return i;
+				}
+			}
+			return std::nullopt;
+		}
+
+		bool hasBlock (RoundedNatural rounded_position) const {
+			return findBlock(rounded_position).has_value();
+		}
+
+		/// Creates a block at the position, doesn't check if it already exists.
+        /// Invalidates all indexes if it returns a value.
+        std::optional<size_t> createBlock (RoundedNatural position) {
+			std::vector<std::byte> bytes = file.read(position, block_size);
+
+			if (bytes.size() == 0) {
+				return std::nullopt;
+			}
+
+			// TODO: remove badly scoring blocks.
+
+			blocks.push_back(Block(position, std::move(bytes)));
+
+			return blocks.size() - 1;
+		}
+
+		/// Returns the block if it exists
+		/// otherwise creates it, then returns it
+		/// note that this takes a normal position
+		std::optional<std::reference_wrapper<Block>> getBlock (Position position) {
+			const RoundedNatural rounded_position = getRoundedPosition(position);
+
+			std::optional<size_t> block_index = findBlock(rounded_position);
+
+			// Create block if it could not be found.
+			if (!block_index.has_value()) {
+				block_index = createBlock(rounded_position);
+
+				// Couldn't construct block, so it was a failure
+				// (Could happen due to reading where there is no data)
+				if (!block_index.has_value()) {
+					return std::nullopt;
+				}
+			}
+
+			/// The position within the block that we desire
+			const size_t block_pos = position - rounded_position;
+
+			Block& block = blocks.at(block_index.value());
+
+			return std::ref(block);
+		}
+
+
+
+
+
+
+		void open (OpenFlags t_open_flags, std::filesystem::path t_filename) {
+			return file.open(t_open_flags, t_filename);
+		}
+
+		void close () {
+			return file.close();
+		}
+
+		void reopen () {
+			return file.reopen();
+		}
+
+		bool isOpen () const {
+			return file.isOpen();
+		}
+
+		bool isWritable () const {
+			return file.isWritable();
+		}
+
+		std::optional<std::byte> read (Position position) {
+			std::optional<std::reference_wrapper<Block>> block_opt = getBlock(position);
+			if (!block_opt.has_value()) {
+				return std::nullopt;
+			}
+
+			// The position was not within a block, Usually (always?) this happens due to reading partially past the end of the file
+			if (!block.isValidIndex(block_pos)) {
+				return std::nullopt;
+			}
+
+			return block.at(block_pos);
+		}]
+
+		std::vector<std::byte> read (Position position, size_t amount) {
+			std::vector<std::byte> values;
+			values.resize(amount);
+			const size_t amount_read = read(position, values.data(), amount);
+			values.resize(amount_read);
+			values.shrink_to_fit();
+			return values;
+		}
+
+		size_t read (Position position, std::byte* data, size_t amount) {
+			// TODO: this is wildly inefficient
+			for (size_t i = 0; i < amount; i++) {
+				std::optional<std::byte> value = read(position + i);
+				if (!value.has_value()) {
+					return i;
+				}
+
+				data[i] = value.value();
+			}
+
+			return amount;
+		}
+
+		void edit (Position position, std::byte value) {
+			return edit(position, value);
+		}
+
+		void edit (Position position, const std::vector<std::byte>& values) {
+			return edit(position, values);
+		}
+
+		template<size_t N>
+		void edit (Position position, const std::array<std::byte, N>& values) {
+			return edit(position, values);
+		}
+
+		void edit (Position position, const std::byte* values, size_t amount) {
+			return edit(position, values, amount);
+		}
+
+		/// Returns the entire file size, NOT the size of the constrained area
+		size_t getSize () {
+			return file.getSize();
+		}
+
+		void resize (size_t amount) {
+			return file.resize(amount);
+		}
+
+		void insertionNoOverwrite (Position position, size_t amount, size_t chunk_size) {
+			return file.insertionNoOverwrite(position, amount, chunk_size);
+		}
+
+		void insertion (Position position, size_t amount, size_t chunk_size) {
+			return file.insertion(position, amount, chunk_size);
+		}
+
+		void insertion (Position position, const std::vector<std::byte>& data, size_t chunk_size) {
+			return file.insertion(position, data, chunk_size);
+		}
+
+		/// Delete's bytes from the file
+		/// Note that it does not resize the file. It is upto the caller to call .resize with the appropriate size
+		void deletion (Position position, size_t amount, size_t chunk_size) {
+			return file.deletion(position, amount, chunk_size);
 		}
 	};
 }
