@@ -547,8 +547,8 @@ namespace AlphaFile {
 		public:
 		File file;
 
-		static constexpr default_block_size = 1024;
-		static constexpr default_max_block_count = 10;
+		static constexpr size_t default_block_size = 1024;
+		static constexpr size_t default_max_block_count = 10;
 
 		explicit BlockCachedFile (size_t t_block_size=default_block_size, size_t t_max_block_count=default_max_block_count) :
 			block_size(t_block_size), max_block_count(t_max_block_count) {}
