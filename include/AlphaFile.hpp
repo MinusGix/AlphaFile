@@ -518,13 +518,13 @@ namespace AlphaFile {
 	struct BlockCachedFile {
 		using File = T;
 		using Position = typename File::Position;
-		using RoundedNatural = Position;
+		using RoundedPosition = Position;
 
         struct Block {
             std::vector<std::byte> data;
-            RoundedNatural start_position;
+            RoundedPosition start_position;
 
-            explicit Block (RoundedNatural t_start, std::vector<std::byte>&& t_data) : data(t_data), start_position(t_start) {}
+            explicit Block (RoundedPosition t_start, std::vector<std::byte>&& t_data) : data(t_data), start_position(t_start) {}
 
 			bool isValidPosition (Position position) const {
 				return position >= start_position && isValidIndex(position - start_position);
@@ -562,12 +562,12 @@ namespace AlphaFile {
 			return file;
 		}
 
-		RoundedNatural getRoundedPosition (Position position) const {
+		RoundedPosition getRoundedPosition (Position position) const {
 			return detail::getRoundedPosition(position, block_size);
 		}
 
 		// TODO: return a reference or a reference_wrapper<Block>
-		std::optional<size_t> findBlock (RoundedNatural rounded_position) const {
+		std::optional<size_t> findBlock (RoundedPosition rounded_position) const {
 			for (size_t i = 0; i < blocks.size(); i++) {
 				if (blocks.at(i).start_position == rounded_position) {
 					return i;
@@ -576,13 +576,13 @@ namespace AlphaFile {
 			return std::nullopt;
 		}
 
-		bool hasBlock (RoundedNatural rounded_position) const {
+		bool hasBlock (RoundedPosition rounded_position) const {
 			return findBlock(rounded_position).has_value();
 		}
 
 		/// Creates a block at the position, doesn't check if it already exists.
         /// Invalidates all indexes if it returns a value.
-        std::optional<size_t> createBlock (RoundedNatural position) {
+        std::optional<size_t> createBlock (RoundedPosition position) {
 			std::vector<std::byte> bytes = file.read(position, block_size);
 
 			if (bytes.size() == 0) {
@@ -598,7 +598,7 @@ namespace AlphaFile {
 
 		/// Returns the block if it exists
 		/// otherwise creates it, then returns it
-		std::optional<std::reference_wrapper<Block>> getBlock (RoundedNatural rounded_position) {
+		std::optional<std::reference_wrapper<Block>> getBlock (RoundedPosition rounded_position) {
 			std::optional<size_t> block_index = findBlock(rounded_position);
 
 			// Create block if it could not be found.
@@ -645,7 +645,7 @@ namespace AlphaFile {
 		}
 
 		std::optional<std::byte> read (Position position) {
-			const RoundedNatural rounded_position = getRoundedPosition(position);
+			const RoundedPosition rounded_position = getRoundedPosition(position);
 			std::optional<std::reference_wrapper<Block>> block_opt = getBlock(rounded_position);
 			if (!block_opt.has_value()) {
 				return std::nullopt;
