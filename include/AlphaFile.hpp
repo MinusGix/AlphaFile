@@ -75,6 +75,10 @@ namespace AlphaFile {
 
 		explicit BasicFile () {}
 
+		std::filesystem::path getFilename () const {
+			return filename;
+		}
+
 		/// Opens the specified file
 		/// If this throws, then this is in an undefined state
 		///  TODO: which can be remedied by calling open once more (and succeeding)
@@ -393,6 +397,10 @@ namespace AlphaFile {
 
 		Absolute convert (Natural position) const {
 			return position + start.value_or(0);
+		}
+
+		std::filesystem::path getFilename () const {
+			return file.getFilename();
 		}
 
 		void open (OpenFlags t_open_flags, std::filesystem::path t_filename) {
