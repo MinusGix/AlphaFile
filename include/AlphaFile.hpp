@@ -523,6 +523,7 @@ namespace AlphaFile {
         struct Block {
             std::vector<std::byte> data;
             RoundedPosition start_position;
+			size_t read = 0;
 
             explicit Block (RoundedPosition t_start, std::vector<std::byte>&& t_data) : data(t_data), start_position(t_start) {}
 
@@ -589,7 +590,22 @@ namespace AlphaFile {
 				return std::nullopt;
 			}
 
-			// TODO: remove badly scoring blocks.
+			// We've reached the limit, so let's remove another block first.
+			if (blocks.size() == max_block_count) {
+				std::optional<size_t> bad_index;
+				size_t last_read_amount = 0;
+				for (size_t i = blocks.size(); i--;) {
+					if (!bad_index.has_value() || blocks.at(i).read <= last_read_amount) {
+						bad_index = i;
+					}
+				}
+
+				if (!bad_index.has_value()) {
+					throw std::runtime_error("Failure in throwing away blocks. Didn't get block to throw away.");
+				}
+
+				blocks.erase(bad_index.value());
+			}
 
 			blocks.push_back(Block(position, std::move(bytes)));
 
@@ -658,6 +674,8 @@ namespace AlphaFile {
 			if (!block_opt.value().get().isValidIndex(block_pos)) {
 				return std::nullopt;
 			}
+
+			block_opt.value().get().read++;
 
 			return block_opt.value().get().at(block_pos);
 		}
