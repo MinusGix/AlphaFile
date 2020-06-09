@@ -45,7 +45,7 @@ namespace AlphaFile {
 	struct ReadError : public std::runtime_error {
 		size_t position;
 		size_t amount;
-		ReadError (size_t t_position, size_t amount, std::string message) : std::runtime_error(message), position(t_position) {}
+		ReadError (size_t t_position, size_t t_amount, std::string message) : std::runtime_error(message), position(t_position), amount(t_amount) {}
 	};
 
 	namespace detail {
@@ -604,7 +604,7 @@ namespace AlphaFile {
 					throw std::runtime_error("Failure in throwing away blocks. Didn't get block to throw away.");
 				}
 
-				blocks.erase(bad_index.value());
+				blocks.erase(blocks.begin() + bad_index.value());
 			}
 
 			blocks.push_back(Block(position, std::move(bytes)));
