@@ -464,20 +464,20 @@ namespace AlphaFile {
 		}
 
 		void edit (Natural position, std::byte value) {
-			return edit(convert(position), value);
+			return file.edit(convert(position), value);
 		}
 
 		void edit (Natural position, const std::vector<std::byte>& values) {
-			return edit(convert(position), values);
+			return file.edit(convert(position), values);
 		}
 
 		template<size_t N>
 		void edit (Natural position, const std::array<std::byte, N>& values) {
-			return edit(convert(position), values);
+			return file.edit(convert(position), values);
 		}
 
 		void edit (Natural position, const std::byte* values, size_t amount) {
-			return edit(convert(position), values, amount);
+			return file.edit(convert(position), values, amount);
 		}
 
 		/// Returns the entire file size, NOT the size of the constrained area
