@@ -714,23 +714,23 @@ namespace AlphaFile {
 		public:
 		void edit (Position position, std::byte value) {
 			eraseBlock(position);
-			return edit(position, value);
+			return file.edit(position, value);
 		}
 
 		void edit (Position position, const std::vector<std::byte>& values) {
 			eraseBlock(position);
-			return edit(position, values);
+			return file.edit(position, values);
 		}
 
 		template<size_t N>
 		void edit (Position position, const std::array<std::byte, N>& values) {
 			eraseBlock(position);
-			return edit(position, values);
+			return file.edit(position, values);
 		}
 
 		void edit (Position position, const std::byte* values, size_t amount) {
 			eraseBlock(position);
-			return edit(position, values, amount);
+			return file.edit(position, values, amount);
 		}
 
 		/// Returns the entire file size, NOT the size of the constrained area
