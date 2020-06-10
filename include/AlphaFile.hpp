@@ -707,8 +707,8 @@ namespace AlphaFile {
 		void eraseBlock (Position position) {
 			const RoundedPosition rounded_position = getRoundedPosition(position);
 			std::optional<Absolute> block_index = findBlock(rounded_position);
-			if (block_opt.has_value()) {
-				blocks.erase(blocks.begin() + block_opt.value());
+			if (block_index.has_value()) {
+				blocks.erase(blocks.begin() + block_index.value());
 			}
 		}
 		public:
