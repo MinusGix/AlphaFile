@@ -729,21 +729,26 @@ namespace AlphaFile {
 			return file.resize(amount);
 		}
 
+		// TODO: make this invalidation more efficient, as we don't actually need to dump all the blocks..
 		void insertionNoOverwrite (Position position, size_t amount, size_t chunk_size) {
+			blocks.clear();
 			return file.insertionNoOverwrite(position, amount, chunk_size);
 		}
 
 		void insertion (Position position, size_t amount, size_t chunk_size) {
+			blocks.clear();
 			return file.insertion(position, amount, chunk_size);
 		}
 
 		void insertion (Position position, const std::vector<std::byte>& data, size_t chunk_size) {
+			blocks.clear();
 			return file.insertion(position, data, chunk_size);
 		}
 
 		/// Delete's bytes from the file
 		/// Note that it does not resize the file. It is upto the caller to call .resize with the appropriate size
 		void deletion (Position position, size_t amount, size_t chunk_size) {
+			blocks.clear();
 			return file.deletion(position, amount, chunk_size);
 		}
 	};
