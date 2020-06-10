@@ -567,7 +567,6 @@ namespace AlphaFile {
 			return detail::getRoundedPosition(position, block_size);
 		}
 
-		// TODO: return a reference or a reference_wrapper<Block>
 		std::optional<size_t> findBlock (RoundedPosition rounded_position) const {
 			for (size_t i = 0; i < blocks.size(); i++) {
 				if (blocks.at(i).start_position == rounded_position) {
@@ -703,20 +702,34 @@ namespace AlphaFile {
 			return amount;
 		}
 
+		// TODO: do more efficient storage of edits rather than invalidating the block at that position
+		private:
+		void eraseBlock (Position position) {
+			const RoundedPosition rounded_position = getRoundedPosition(position);
+			std::optional<Absolute> block_index = findBlock(rounded_position);
+			if (block_opt.has_value()) {
+				blocks.erase(blocks.begin() + block_opt.value());
+			}
+		}
+		public:
 		void edit (Position position, std::byte value) {
+			eraseBlock(position);
 			return edit(position, value);
 		}
 
 		void edit (Position position, const std::vector<std::byte>& values) {
+			eraseBlock(position);
 			return edit(position, values);
 		}
 
 		template<size_t N>
 		void edit (Position position, const std::array<std::byte, N>& values) {
+			eraseBlock(position);
 			return edit(position, values);
 		}
 
 		void edit (Position position, const std::byte* values, size_t amount) {
+			eraseBlock(position);
 			return edit(position, values, amount);
 		}
 
